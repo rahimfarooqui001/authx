@@ -1,3 +1,119 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
+/* Midnight Gold — Premium Dark Theme */
+:root {
+  /* Core Colors */
+  --bg: #0c0c0c;               /* pure dark background */
+  --surface: #111111;          /* card background */
+  --surface-2: #161616;        
+  --border: rgba(255,255,255,0.06);
+
+  --text-main: #f5f5f5;         /* high contrast text */
+  --text-muted: #b7b7b7;        /* subtle muted text */
+
+  --accent: #d4af37;           /* gold */
+  --accent-hover: #b8902c;
+  --accent-soft: rgba(212,175,55,0.15);
+
+  /* Effects */
+  --shadow: 0 8px 30px rgba(0,0,0,0.6);
+  --blur: blur(10px);
+  --radius: 12px;
+}
+
+@layer base {
+  html, body, #root {
+    background: var(--bg);
+    color: var(--text-main);
+    height: 100%;
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl p-6 shadow-lg;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .glass {
+    background: var(--surface-2);
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .btn-primary {
+    @apply px-4 py-2 rounded-md font-semibold text-sm transition;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    color: rgb(15, 15, 15);
+    box-shadow: 0 6px 20px var(--accent-soft);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(212,175,55,0.3);
+  }
+
+  .btn-ghost {
+    @apply px-3 py-2 rounded-md text-sm transition;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .btn-ghost:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .input {
+    @apply w-full px-4 py-2 rounded-md text-sm;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--text-main);
+    transition: 0.15s ease;
+  }
+
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .h1 {
+    @apply text-3xl font-semibold;
+  }
+
+  .h2 {
+    @apply text-xl font-semibold;
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+}
+
+@layer utilities {
+  .center-screen {
+    @apply flex items-center justify-center min-h-screen;
+  }
+
+  .gold-text {
+    color: var(--accent);
+  }
+
+  .hover-gold:hover {
+    color: var(--accent);
+  }
+
+  .border-soft {
+    border: 1px solid var(--border);
+  }
+
+  .page-container {
+    @apply max-w-5xl mx-auto px-4 py-8;
+  }
+}
