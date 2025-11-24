@@ -19,6 +19,7 @@ import { generateTOTPSecret, generateQRCodeDataURL, verifyTOTP } from "../utils/
 
 const SALT_ROUNDS = Number(process.env.SALT_ROUNDS || 12);
 const APP_BASE = process.env.APP_BASE_URL || "http://localhost:5000";
+const FRONTEND_URL=process.env.FRONTEND_URL 
 
 const makeTokenString = () => crypto.randomBytes(32).toString("hex");
 
@@ -102,6 +103,42 @@ export const verifyEmail = async (req, res) => {
 //
 // ─── LOGIN ─────────────────────────────────────────────────────────────────
 //
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password, twoFAToken } = req.body;
+//     console.log(req.body,'login body')
+
+//     const user = await User.findOne({ email });
+//     if (!user) return failure(res, "Invalid credentials", 401);
+
+//     const match = await bcrypt.compare(password, user.password);
+//     if (!match) return failure(res, "Invalid credentials", 401);
+
+//     if (!user.isVerified) return failure(res, "Please verify your email before login", 403);
+
+//     // user has enabled 2FA → must verify TOTP token
+//     if (user.twoFA?.enabled) {
+//       if (!twoFAToken) {
+//         return success(res, { twoFARequired: true, message: "2FA required" });
+//       }
+
+//       const ok = verifyTOTP(user.twoFA.secret, twoFAToken);
+//       if (!ok) return failure(res, "Invalid 2FA code", 401);
+//     }
+
+//     const access = createAccessToken(user);
+//     const refresh = await createRefreshToken(req, user);
+
+//     return success(res, {
+//       user: { id: user._id, email: user.email, role: user.role ,name:user.name },
+//       access,
+//       refresh
+//     });
+//   } catch (err) {
+//     return failure(res, err.message , 500);
+//   }
+// };
+
 export const login = async (req, res) => {
   try {
     const { email, password, twoFAToken } = req.body;
@@ -112,30 +149,53 @@ export const login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return failure(res, "Invalid credentials", 401);
 
-    if (!user.isVerified) return failure(res, "Please verify your email before login", 403);
+    if (!user.isVerified)
+      return failure(res, "Please verify your email before login", 403);
 
-    // user has enabled 2FA → must verify TOTP token
+    // -----------------------------------
+    // 2FA Enabled → Ask for OTP first
+    // -----------------------------------
     if (user.twoFA?.enabled) {
       if (!twoFAToken) {
-        return success(res, { twoFARequired: true, message: "2FA required" });
+        return success(res, {
+          twoFARequired: true,
+          message: "Two-factor authentication required"
+        });
       }
 
-      const ok = verifyTOTP(user.twoFA.secret, twoFAToken);
-      if (!ok) return failure(res, "Invalid 2FA code", 401);
+      const verified = verifyTOTP(user.twoFA.secret, twoFAToken);
+      if (!verified) return failure(res, "Invalid 2FA code", 401);
     }
 
+    // -----------------------------------
+    // Generate JWT Tokens
+    // -----------------------------------
     const access = createAccessToken(user);
     const refresh = await createRefreshToken(req, user);
 
+    // -----------------------------------
+    // Send Safe User Data (Frontend Needs)
+    // -----------------------------------
+    const safeUser = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+      twoFAEnabled: user.twoFA?.enabled || false
+    };
+
     return success(res, {
-      user: { id: user._id, email: user.email, role: user.role },
+      message: "Login successful",
+      user: safeUser,
       access,
       refresh
     });
   } catch (err) {
-    return failure(res, err.message , 500);
+    return failure(res, err.message, 500);
   }
 };
+
 
 //
 // ─── REFRESH TOKEN ─────────────────────────────────────────────────────────
@@ -194,7 +254,7 @@ export const requestPasswordReset = async (req, res) => {
 
     await PasswordResetToken.create({ user: user._id, token, expiresAt });
 
-    const resetUrl = `${APP_BASE}/api/auth/reset-password?token=${token}`;
+    const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
 
     const html = `
       <p>Hi ${user.name},</p>
@@ -287,28 +347,84 @@ export const verifyAndEnable2FA = async (req, res) => {
 //
 // ─── DISABLE 2FA ───────────────────────────────────────────────────────────
 //
+// export const disable2FA = async (req, res) => {
+//   try {
+//     const { token, password } = req.body;
+//     console.log(req.body)
+//     const user = await User.findById(req.user.id);
+
+//     if (!user) return failure(res, "User not found", 404);
+
+//     let ok = false;
+
+//     if (password) {
+//       ok = await bcrypt.compare(password, user.password);
+//     } else if (token) {
+//       ok = verifyTOTP(user.twoFA.secret, token);
+//     }
+
+//     if (!ok) return failure(res, "Verification failed", 401);
+
+//     user.twoFA = { enabled: false, secret: null };
+//     await user.save();
+
+//     return success(res, "2FA disabled");
+//   } catch (err) {
+//     return failure(res, err.message, 500);
+//   }
+// };
+
 export const disable2FA = async (req, res) => {
   try {
-    const { token, password } = req.body;
-    console.log(req.body)
-    const user = await User.findById(req.user.id);
+    const { token, password } = req.body; // token = 6-digit code
+    console.log("Disable 2FA request:", req.body);
 
+    const user = await User.findById(req.user.id);
     if (!user) return failure(res, "User not found", 404);
 
-    let ok = false;
-
-    if (password) {
-      ok = await bcrypt.compare(password, user.password);
-    } else if (token) {
-      ok = verifyTOTP(user.twoFA.secret, token);
+    if (!user.twoFA?.enabled) {
+      return failure(res, "2FA is not enabled for this account", 400);
     }
 
-    if (!ok) return failure(res, "Verification failed", 401);
+    
+    if (!password && !token) {
+      return failure(res, "Provide password or 6-digit code", 400);
+    }
 
+    let passwordOK = true;
+    let totpOK = true;
+
+    // Validate password (if provided)
+    if (password) {
+      passwordOK = await bcrypt.compare(password, user.password);
+      if (!passwordOK) {
+        return failure(res, "Incorrect password", 401);
+      }
+    }
+
+    // Validate 6-digit TOTP code (if provided)
+    if (token) {
+      totpOK = verifyTOTP(user.twoFA.secret, token);
+      if (!totpOK) {
+        return failure(res, "Invalid 6-digit code", 401);
+      }
+    }
+
+    // If BOTH were provided, BOTH must be correct
+    if (password && token && (!passwordOK || !totpOK)) {
+      return failure(res, "Password or code invalid", 401);
+    }
+
+    // ------------------------------------------
+    // Success → Disable 2FA
+    // ------------------------------------------
     user.twoFA = { enabled: false, secret: null };
     await user.save();
 
-    return success(res, "2FA disabled");
+    return success(res, {
+      message: "Two-Factor Authentication disabled",
+    });
+
   } catch (err) {
     return failure(res, err.message, 500);
   }

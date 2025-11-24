@@ -1,8 +1,293 @@
+
+
+
+
+// import { useState, useRef, useEffect } from "react";
+// import { useForm } from "react-hook-form";
+// import { gsap } from "gsap";
+// import { Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+// import { useNavigate } from "react-router-dom";
+// import { useAuth } from "../hooks/useAuth";
+// import { use2FA } from "../hooks/use2FA";
+// import toast from "react-hot-toast";
+
+// export default function Login() {
+//   const cardRef = useRef(null);
+//   const navigate = useNavigate();
+
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [twoFARequired, setTwoFARequired] = useState(false);
+//   const [credentials, setCredentials] = useState({ email: "", password: "" });
+//   const { loading, login, error } = useAuth();
+//   const { faLoading, verifyAndEnable2FA, faError } = use2FA();
+
+//   const {
+//     register,
+//     handleSubmit,
+//     formState: { errors },
+//     watch
+//   } = useForm();
+
+//   // GSAP entrance animation
+//   useEffect(() => {
+//     if (cardRef.current) {
+//       gsap.fromTo(
+//         cardRef.current,
+//         { 
+//           opacity: 0, 
+//           y: 30,
+//           scale: 0.95
+//         },
+//         { 
+//           opacity: 1, 
+//           y: 0,
+//           scale: 1,
+//           duration: 0.6,
+//           ease: "power3.out"
+//         }
+//       );
+//     }
+//   }, []);
+
+//   const onSubmit = async (data) => {
+//     try {
+//       if (twoFARequired) {
+//         // Complete login with 2FA using stored credentials
+//         const payload = {
+//           email: credentials.email,
+//           password: credentials.password,
+//           twoFAToken: data.twoFAToken
+//         };
+//         const result = await login(payload);
+//         if (result?.access) {
+//             toast.success('Login successfull')
+//           navigate("/dashboard");
+//         }
+//       } else {
+//         // Initial login attempt
+//         const payload = {
+//           email: data.email,
+//           password: data.password
+//         };
+//         const result = await login(payload);
+//          toast.success('Login successfull')
+//          console.log(result)
+//          navigate('/dashboard')
+//         // Check if 2FA is required
+//         if (result?.twoFARequired) {
+//           // Store credentials for 2FA submission
+//           setCredentials({ email: data.email, password: data.password });
+//           setTwoFARequired(true);
+//         } else if (result?.access) {
+//           navigate("/dashboard");
+//         }
+//       }
+//     } catch (err) {
+//       console.error("Login error:", err);
+//     }
+//   };
+
+//   const currentError = error || faError;
+//   const isLoading = loading || faLoading;
+
+//   return (
+//     <div 
+//       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" 
+//       style={{ backgroundColor: "var(--bg)" }}
+//     >
+//       {/* Animated background gradient */}
+//       <div className="absolute inset-0 opacity-30">
+//         <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full blur-3xl animate-pulse" />
+//         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-amber-500/20 to-yellow-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+//       </div>
+
+//       <div ref={cardRef} className="card w-full max-w-md p-8 glass relative z-10">
+//         {/* TITLE */}
+//         <div className="text-center mb-8">
+//           <h1 className="h1 gold-text mb-2 text-3xl font-bold">Welcome Back</h1>
+//           <p className="muted text-sm">Sign in to continue to AuthX</p>
+//         </div>
+
+//         {/* ERROR ALERT */}
+//         {currentError && (
+//           <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-6">
+//             <AlertTriangle size={20} className="text-red-400 flex-shrink-0" />
+//             <span className="text-red-400 text-sm">{currentError}</span>
+//           </div>
+//         )}
+
+//         {/* SUCCESS INDICATOR FOR 2FA */}
+//         {twoFARequired && (
+//           <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-6">
+//             <CheckCircle2 size={20} className="text-green-400 flex-shrink-0" />
+//             <span className="text-green-400 text-sm">
+//               2FA is enabled. Please enter your verification code.
+//             </span>
+//           </div>
+//         )}
+
+//         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+//           {/* EMAIL */}
+//           {!twoFARequired && (
+//             <div className="flex flex-col">
+//               <label className="text-sm font-medium mb-2 text-gray-300">Email Address</label>
+//               <input
+//                 {...register("email", { 
+//                   required: "Email is required",
+//                   pattern: {
+//                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+//                     message: "Invalid email address"
+//                   }
+//                 })}
+//                 type="email"
+//                 placeholder="you@example.com"
+//                 className="input"
+//                 disabled={isLoading}
+//               />
+//               {errors.email && (
+//                 <span className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+//                   <AlertTriangle size={12} />
+//                   {errors.email.message}
+//                 </span>
+//               )}
+//             </div>
+//           )}
+
+//           {/* PASSWORD */}
+//           {!twoFARequired && (
+//             <div className="flex flex-col">
+//               <label className="text-sm font-medium mb-2 text-gray-300">Password</label>
+//               <div className="relative">
+//                 <input
+//                   {...register("password", {
+//                     required: "Password is required",
+//                     minLength: { value: 6, message: "Password must be at least 6 characters" },
+//                   })}
+//                   type={showPassword ? "text" : "password"}
+//                   placeholder="Enter your password"
+//                   className="input pr-12"
+//                   disabled={isLoading}
+//                 />
+//                 <button
+//                   type="button"
+//                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+//                   onClick={() => setShowPassword(!showPassword)}
+//                   disabled={isLoading}
+//                 >
+//                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+//                 </button>
+//               </div>
+//               {errors.password && (
+//                 <span className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+//                   <AlertTriangle size={12} />
+//                   {errors.password.message}
+//                 </span>
+//               )}
+//             </div>
+//           )}
+
+//           {/* 2FA INPUT */}
+//           {twoFARequired && (
+//             <div className="flex flex-col">
+//               <label className="text-sm font-medium mb-2 text-gray-300">
+//                 Two-Factor Authentication Code
+//               </label>
+//               <input
+//                 {...register("twoFAToken", {
+//                   required: "Verification code is required",
+//                   pattern: {
+//                     value: /^[0-9]{6}$/,
+//                     message: "Code must be exactly 6 digits"
+//                   }
+//                 })}
+//                 placeholder="000000"
+//                 maxLength={6}
+//                 className="input text-center text-2xl tracking-widest font-mono"
+//                 disabled={isLoading}
+//                 autoComplete="off"
+//               />
+//               {errors.twoFAToken && (
+//                 <span className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+//                   <AlertTriangle size={12} />
+//                   {errors.twoFAToken.message}
+//                 </span>
+//               )}
+//               <p className="text-xs muted mt-2 text-center">
+//                 Enter the 6-digit code from your authenticator app
+//               </p>
+//             </div>
+//           )}
+
+//           {/* Submit Button */}
+//           <button 
+//             type="submit" 
+//             className="btn-primary w-full mt-6 flex items-center justify-center gap-2"
+//             disabled={isLoading}
+//           >
+//             {isLoading ? (
+//               <>
+//                 <Loader2 size={18} className="animate-spin" />
+//                 <span>Verifying...</span>
+//               </>
+//             ) : (
+//               <span>{twoFARequired ? "Verify & Sign In" : "Sign In"}</span>
+//             )}
+//           </button>
+
+//           {/* Footer Actions */}
+//           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-700/50">
+//             <button
+//               type="button"
+//               onClick={() => navigate("/forgot")}
+//               className="text-sm hover-gold transition-colors"
+//               disabled={isLoading}
+//             >
+//               Forgot password?
+//             </button>
+            
+//             {twoFARequired && (
+//               <button
+//                 type="button"
+//                 onClick={() => {
+//                   setTwoFARequired(false);
+//                   setCredentials({ email: "", password: "" });
+//                 }}
+//                 className="text-sm text-gray-400 hover:text-white transition-colors"
+//                 disabled={isLoading}
+//               >
+//                 Back to login
+//               </button>
+//             )}
+//           </div>
+//         </form>
+
+//         {/* Sign Up Link */}
+//         {!twoFARequired && (
+//           <div className="mt-8 text-center">
+//             <p className="text-sm muted">
+//               Don't have an account?{" "}
+//               <button
+//                 onClick={() => navigate("/register")}
+//                 className="gold-text hover:underline font-medium"
+//                 disabled={isLoading}
+//               >
+//                 Sign up
+//               </button>
+//             </p>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { gsap } from "gsap";
-import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const cardRef = useRef(null);
@@ -10,119 +295,264 @@ export default function Login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [twoFARequired, setTwoFARequired] = useState(false);
-  const [error, setError] = useState("");
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
 
-  // RHF
+  const { loading, login, error } = useAuth();
+
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm();
 
-  // GSAP
+  // GSAP entrance animation
+  useEffect(() => {
+    gsap.fromTo(
+      cardRef.current,
+      { opacity: 0, y: 30, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" }
+    );
+  }, []);
 
+  const onSubmit = async (data) => {
+    try {
+      // --------------------------------
+      // Step 2: Verify 2FA
+      // --------------------------------
+      if (twoFARequired) {
+        const payload = {
+          email: credentials.email,
+          password: credentials.password,
+          twoFAToken: data.twoFAToken,
+        };
 
-  const onSubmit = (data) => {
-    console.log("FORM SUBMITTED:", data);
+        const result = await login(payload);
+
+        if (result?.access) {
+          toast.success("Login successful");
+          navigate("/dashboard");
+        }
+        return;
+      }
+
+      // --------------------------------
+      // Step 1: Normal login
+      // --------------------------------
+      const payload = { email: data.email, password: data.password };
+      const result = await login(payload);
+
+      // Requires 2FA
+      if (result?.twoFARequired) {
+        setCredentials({ email: data.email, password: data.password });
+        setTwoFARequired(true);
+        return;
+      }
+
+      // Successful login without 2FA
+      if (result?.access) {
+        toast.success("Login successful");
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+    }
   };
 
+  const currentError = error;
+  const isLoading = loading;
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "var(--bg)" }}>
-      <div ref={cardRef} className="card w-full max-w-md p-8 glass">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      style={{ backgroundColor: "var(--bg)" }}
+    >
+      {/* Animated background highlights */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/20 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
+      </div>
 
-        {/* TITLE */}
-        <h1 className="h1 gold-text mb-1">Sign in to AuthX</h1>
-        <p className="muted text-sm mb-6">Secure access using premium authentication.</p>
+      <div
+        ref={cardRef}
+        className="card w-full max-w-md p-8 glass relative z-10 rounded-xl border border-white/10 shadow-2xl"
+      >
+        {/* HEADER */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--gold)" }}>
+            Welcome Back
+          </h1>
+          <p className="muted text-sm">Sign in to continue to AuthX</p>
+        </div>
 
-        {/* ERROR */}
-        {error && (
-          <div className="flex items-center gap-2 text-red-400 text-sm mb-3">
-            <AlertTriangle size={16} /> {error}
+        {/* ERRORS */}
+        {currentError && (
+          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-6">
+            <AlertTriangle size={20} className="text-red-400 flex-shrink-0" />
+            <span className="text-red-400 text-sm">{currentError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-          {/* EMAIL */}
-          <div className="flex flex-col">
-            <label className="text-xs muted mb-1">Email</label>
-            <input
-              {...register("email", { required: "Email is required" })}
-              type="email"
-              placeholder="you@example.com"
-              className="input"
-            />
-            {errors.email && (
-              <span className="text-red-400 text-xs mt-1">{errors.email.message}</span>
-            )}
+        {/* 2FA MESSAGE */}
+        {twoFARequired && (
+          <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-6">
+            <CheckCircle2 size={20} className="text-green-400" />
+            <span className="text-green-400 text-sm">
+              2FA required — enter your 6-digit verification code.
+            </span>
           </div>
+        )}
 
-          {/* PASSWORD */}
-          <div className="flex flex-col">
-            <label className="text-xs muted mb-1">Password</label>
-
-            <div className="relative">
-              <input
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: { value: 6, message: "Min 6 chars required" },
-                })}
-                type={showPassword ? "text" : "password"}
-                placeholder="•••••••"
-                className="input"
-              />
-
-              {/* Toggle */}
-              <button
-                type="button"
-                className="absolute right-3 top-2.5 text-gray-300 hover:text-white transition"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {errors.password && (
-              <span className="text-red-400 text-xs mt-1">{errors.password.message}</span>
-            )}
-          </div>
-
-          {/* 2FA INPUT */}
-          {twoFARequired && (
+        {/* FORM */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* EMAIL FIELD */}
+          {!twoFARequired && (
             <div className="flex flex-col">
-              <label className="text-xs muted mb-1">2FA Code</label>
+              <label className="text-sm font-medium mb-2 text-gray-300">Email Address</label>
               <input
-                {...register("twoFAToken", {
-                  required: "Enter the 6-digit code",
-                  minLength: { value: 6, message: "Code must be 6 digits" },
-                  maxLength: { value: 6, message: "Code must be 6 digits" },
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Invalid email",
+                  },
                 })}
-                placeholder="123456"
+                type="email"
+                placeholder="you@example.com"
                 className="input"
+                disabled={isLoading}
               />
-
-              {errors.twoFAToken && (
-                <span className="text-red-400 text-xs mt-1">
-                  {errors.twoFAToken.message}
-                </span>
+              {errors.email && (
+                <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <AlertTriangle size={12} /> {errors.email.message}
+                </p>
               )}
             </div>
           )}
 
-          {/* Submit */}
-          <button type="submit" className="btn-primary w-full mt-4">
-            {twoFARequired ? "Verify & Sign In" : "Sign In"}
+          {/* PASSWORD FIELD */}
+          {!twoFARequired && (
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2 text-gray-300">Password</label>
+
+              <div className="relative">
+                <input
+                  {...register("password", {
+                    required: "Password required",
+                    minLength: { value: 6, message: "Min 6 characters" },
+                  })}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="input pr-12"
+                  disabled={isLoading}
+                />
+
+                {/* Eye toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {errors.password && (
+                <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <AlertTriangle size={12} /> {errors.password.message}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* 2FA FIELD */}
+          {twoFARequired && (
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2 text-gray-300">
+                2FA Verification Code
+              </label>
+              <input
+                {...register("twoFAToken", {
+                  required: "Enter your 6-digit code",
+                  pattern: {
+                    value: /^[0-9]{6}$/,
+                    message: "Must be 6 digits",
+                  },
+                })}
+                maxLength={6}
+                placeholder="000000"
+                className="input text-center text-2xl tracking-widest font-mono"
+                autoComplete="off"
+                disabled={isLoading}
+              />
+
+              {errors.twoFAToken && (
+                <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <AlertTriangle size={12} /> {errors.twoFAToken.message}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="btn-primary w-full mt-6 flex items-center justify-center gap-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <span>{twoFARequired ? "Verify & Sign In" : "Sign In"}</span>
+            )}
           </button>
 
-          {/* Forgot */}
-          <button
-            type="button"
-            onClick={() => navigate("/forgot")}
-            className="text-sm hover-gold mt-3"
-          >
-            Forgot password?
-          </button>
+          {/* FOOTER ACTIONS */}
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-700/40">
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-sm hover-gold transition"
+              disabled={isLoading}
+            >
+              Forgot password?
+            </button>
+
+            {twoFARequired && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFARequired(false);
+                  setCredentials({ email: "", password: "" });
+                }}
+                className="text-sm text-gray-400 hover:text-white transition"
+                disabled={isLoading}
+              >
+                Back to login
+              </button>
+            )}
+          </div>
         </form>
+
+        {/* SIGN UP LINK */}
+        {!twoFARequired && (
+          <div className="mt-8 text-center">
+            <p className="text-sm muted">
+              Don’t have an account?{" "}
+              <button
+                className="gold-text hover:underline font-medium"
+                onClick={() => navigate("/signup")}
+              >
+                Sign up
+              </button>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

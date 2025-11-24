@@ -5,20 +5,40 @@ import Register from './pages/Register'
 import ResetPassword from './pages/ResetPassword'
 import TwoFASetup from './pages/TwoFASetup'
 import VerifyEmailPending from './pages/VerifyEmailPending'
+import Dashboard from './pages/Dashboard'
+import ForgotPassword from './pages/ForgotPassword'
+import ProtectedRoute from './components/ProtectedRoute'
+import Disable2FA from './pages/Disable2FA'
 
 const App = () => {
   return (
     <div>
+      
+
        <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Register />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/2fa" element={<TwoFASetup />} />
-        <Route path="/verify-email" element={<VerifyEmailPending />} />
+      {/* PUBLIC ROUTES */}
+      <Route path="/" element={<Login />} />
+      <Route path="/signup" element={<Register />} />
+      <Route path="/forgot" element={<ForgotPassword />} />
+      {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
+      <Route path="/reset-password" element={<ResetPassword />} />
 
+      <Route path="/verify-email/:token" element={<VerifyEmailPending />} />
+      <Route path="/2fa/disable" element={<Disable2FA />} />
 
-       
-      </Routes>
+      {/* 2FA VERIFY PAGE */}
+      <Route path="/2fa" element={<TwoFASetup />} />
+
+      {/* PROTECTED */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
 
     </div>
   )

@@ -1,39 +1,69 @@
 import React, { createContext, useEffect, useState } from "react";
-import api from "../api/axios";
-import {jwtDecode} from "jwt-decode";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState({ user: null, access: null });
+  const [auth, setAuth] = useState({
+    user: null,
+    access: null,
+    refresh: null,
+    loading: true,
+  });
 
+  // ---------------------------
+  // Restore session on refresh
+  // ---------------------------
   useEffect(() => {
-    // try to load user if access stored in session
-    const stored = sessionStorage.getItem("auth");
-    if (stored) setAuth(JSON.parse(stored));
+    const saved = sessionStorage.getItem("auth");
+    if (saved) {
+      setAuth({ ...JSON.parse(saved), loading: false });
+    } else {
+      setAuth((prev) => ({ ...prev, loading: false }));
+    }
   }, []);
 
+  // ---------------------------
+  // Persist auth state
+  // ---------------------------
   useEffect(() => {
-    if (auth && auth.access) {
+    if (auth?.access) {
       sessionStorage.setItem("auth", JSON.stringify(auth));
     } else {
       sessionStorage.removeItem("auth");
     }
   }, [auth]);
 
-  const login = (data) => {
-    setAuth({ user: data.user, access: data.access });
+  // ---------------------------
+  // LOGIN (store tokens + user)
+  // ---------------------------
+  const login = ({ user, access, refresh }) => {
+    setAuth({
+      user,
+      access,
+      refresh,
+      loading: false,
+    });
   };
 
-  const logout = async () => {
-    // optionally revoke refresh on backend
-    setAuth({ user: null, access: null });
+  // ---------------------------
+  // LOGOUT (clear everything)
+  // ---------------------------
+  const logout = () => {
+    setAuth({
+      user: null,
+      access: null,
+      refresh: null,
+      loading: false,
+    });
     sessionStorage.removeItem("auth");
   };
 
-  const value = { auth, setAuth, login, logout };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ auth, setAuth, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthContext;
+
