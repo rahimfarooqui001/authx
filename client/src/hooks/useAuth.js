@@ -1,15 +1,138 @@
 
 
 
+// import axios from "axios";
+// import { useState, useContext } from "react";
+// import AuthContext from "../context/AuthContext";
+// import { axiosClient } from "../api/axios";
+
+// const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api/auth";
+
+// export function useAuth() {
+//   const { auth, login: ctxLogin, logout: ctxLogout, setAuth } =
+//     useContext(AuthContext);
+
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   // --------------------------------
+//   // Save access & refresh tokens
+//   // --------------------------------
+//   const storeTokens = (access, refresh, user) => {
+//     ctxLogin({ user, access, refresh });
+//   };
+
+//   const login = async (payload) => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+
+//       const res = await axios.post(`${API_BASE}/login`, payload);
+//       const data = res.data?.data;
+    
+//       if (data?.twoFARequired) {
+//         return { twoFARequired: true };
+//       }
+
+//       storeTokens(data.access, data.refresh, data.user);
+//       return data;
+//     } catch (err) {
+//       const errorMsg = 
+//         err?.response?.data?.message || "Login failed. Please try again.";
+//       setError(errorMsg);
+//       return { error: errorMsg };
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+
+//   const registerUser = async (payload) => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+
+//       const res = await axios.post(`${API_BASE}/register`, payload);
+//       return res.data;
+//     } catch (err) {
+//       const errorMsg =
+//         err?.response?.data?.message || "Registration failed";
+//       setError(errorMsg);
+//       return { error: errorMsg };
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+
+//   const refresh = async () => {
+//     try {
+//       const res = await axios.post(`${API_BASE}/refresh`);
+//       const newAccess = res.data?.data?.access;
+
+//       if (!newAccess) throw new Error("No access token received");
+
+//       // update only the access token (keep same refresh & user)
+//       setAuth((prev) => ({
+//         ...prev,
+//         access: newAccess,
+//       }));
+
+//       return newAccess;
+//     } catch (err) {
+//       setError("Session expired, please login again");
+//       ctxLogout();
+//       throw new Error("Session expired");
+//     }
+//   };
+
+//   const logout = async () => {
+//     try {
+//       await axios.post(`${API_BASE}/logout`);
+//     } catch (err) {
+//       console.warn("Logout error:", err);
+//     }
+
+//     ctxLogout();
+//     setError(null);
+//   };
+
+
+// const getUser = async () => {
+//   try {
+//     const res = await axiosClient.get(`/user`);
+    
+//     const user = res.data?.data || res.data?.user;
+//     setAuth((prev) => ({ ...prev, user }));
+
+//     return user;
+//   } catch (err) {
+//     const errorMsg = err.response?.data?.message || "Failed to load user";
+//     setError(errorMsg);
+//     throw new Error(errorMsg);
+//   }
+// };
+
+//   return {
+//     loading,
+//     error,
+//     login,
+//     registerUser,
+//     refresh,
+//     logout,
+//     getUser,
+//   };
+// }
+
 import axios from "axios";
 import { useState, useContext } from "react";
 import AuthContext from "../context/AuthContext";
+import { axiosClient } from "../api/axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api/auth";
 
 export function useAuth() {
-  const { auth, login: ctxLogin, logout: ctxLogout, setAuth } =
-    useContext(AuthContext);
+  const { auth, login: ctxLogin, logout: ctxLogout, setAuth } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +145,7 @@ export function useAuth() {
   };
 
   // --------------------------------
-  // LOGIN
+  // LOGIN (supports 2FA or Recovery Code)
   // --------------------------------
   const login = async (payload) => {
     try {
@@ -32,16 +155,16 @@ export function useAuth() {
       const res = await axios.post(`${API_BASE}/login`, payload);
       const data = res.data?.data;
 
-      // 2FA step required — do not store tokens yet
+      // Backend signals that 2FA or recovery code is required
       if (data?.twoFARequired) {
         return { twoFARequired: true };
       }
 
+      // If recovery code was used, backend will return full login info
       storeTokens(data.access, data.refresh, data.user);
       return data;
     } catch (err) {
-      const errorMsg =
-        err?.response?.data?.message || "Login failed. Please try again.";
+      const errorMsg = err?.response?.data?.message || "Login failed. Please try again.";
       setError(errorMsg);
       return { error: errorMsg };
     } finally {
@@ -49,19 +172,18 @@ export function useAuth() {
     }
   };
 
-  // --------------------------------
-  // REGISTER
-  // --------------------------------
   const registerUser = async (payload) => {
     try {
       setLoading(true);
       setError(null);
 
       const res = await axios.post(`${API_BASE}/register`, payload);
-      return res.data;
+      console.log(res.data?.data)
+     const data=res?.data?.data
+     storeTokens(data.access, data.refresh, data.user);
+      return data;
     } catch (err) {
-      const errorMsg =
-        err?.response?.data?.message || "Registration failed";
+      const errorMsg = err?.response?.data?.message || "Registration failed";
       setError(errorMsg);
       return { error: errorMsg };
     } finally {
@@ -69,9 +191,6 @@ export function useAuth() {
     }
   };
 
-  // --------------------------------
-  // REFRESH TOKEN
-  // --------------------------------
   const refresh = async () => {
     try {
       const res = await axios.post(`${API_BASE}/refresh`);
@@ -80,11 +199,7 @@ export function useAuth() {
       if (!newAccess) throw new Error("No access token received");
 
       // update only the access token (keep same refresh & user)
-      setAuth((prev) => ({
-        ...prev,
-        access: newAccess,
-      }));
-
+      setAuth((prev) => ({ ...prev, access: newAccess }));
       return newAccess;
     } catch (err) {
       setError("Session expired, please login again");
@@ -93,9 +208,6 @@ export function useAuth() {
     }
   };
 
-  // --------------------------------
-  // LOGOUT
-  // --------------------------------
   const logout = async () => {
     try {
       await axios.post(`${API_BASE}/logout`);
@@ -107,23 +219,11 @@ export function useAuth() {
     setError(null);
   };
 
-  // --------------------------------
-  // ME (Load logged-in user)
-  // --------------------------------
-  const me = async () => {
+  const getUser = async () => {
     try {
-      const token = auth?.access;
-      if (!token) throw new Error("No access token available");
-
-      const res = await axios.get(`${API_BASE}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const user = res.data?.data;
-
-      // update context user
+      const res = await axiosClient.get(`/user`);
+      const user = res.data?.data || res.data?.user;
       setAuth((prev) => ({ ...prev, user }));
-
       return user;
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Failed to load user";
@@ -139,6 +239,6 @@ export function useAuth() {
     registerUser,
     refresh,
     logout,
-    me,
+    getUser,
   };
 }

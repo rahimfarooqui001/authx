@@ -13,13 +13,15 @@ import {
   verifyAndEnable2FA,
   verifyEmail,
   refresh,
-  me
+  me,
+  getUser
 } from "../presenters/authPresenter.js";
 
 const router = Router();
 
 router.post("/register",register);
 router.get("/verify-email/:token", verifyEmail);
+router.get('/user',requireAuth,getUser)
 
 router.post("/login", login);
 router.post("/refresh", refresh);

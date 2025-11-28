@@ -32,3 +32,4 @@ export const verifyRefreshToken = (token) =>
 export const revokeRefreshToken = async (token) => {
   await RefreshToken.deleteOne({ token });
 };
+

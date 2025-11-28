@@ -2,7 +2,8 @@ import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { useForm } from "react-hook-form";
 import { use2FA } from "../hooks/use2FA";
-import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, UserStar } from "lucide-react";
+import TwoFAEnabled from "../components/TwoFAEnabled";
 
 export default function TwoFASetup() {
   const cardRef = useRef(null);
@@ -11,7 +12,7 @@ export default function TwoFASetup() {
   const [qr, setQr] = useState(null);
   const [secret, setSecret] = useState(null);
   const [success, setSuccess] = useState(false);
-
+const [recovery,setRecovery]=useState([])
   const { register, handleSubmit, setValue, watch } = useForm();
 
   // OTP boxes controlled by watch
@@ -43,6 +44,7 @@ export default function TwoFASetup() {
 
     if (result?.success) {
       setSuccess(true);
+      setRecovery(result.data.recoveryCodes)
     }
   };
 
@@ -146,30 +148,31 @@ export default function TwoFASetup() {
           </>
         ) : (
           // SUCCESS BLOCK
-          <div className="text-center">
-            <CheckCircle2
-              size={60}
-              className="text-green-400 mx-auto mb-4"
-            />
+        //   <div className="text-center">
+        //     <CheckCircle2
+        //       size={60}
+        //       className="text-green-400 mx-auto mb-4"
+        //     />
 
-            <h1
-              className="text-3xl font-bold mb-2"
-              style={{ color: "var(--gold)" }}
-            >
-              2FA Enabled!
-            </h1>
+        //     <h1
+        //       className="text-3xl font-bold mb-2"
+        //       style={{ color: "var(--gold)" }}
+        //     >
+        //       2FA Enabled!
+        //     </h1>
 
-            <p className="text-gray-300 mb-6">
-              Your account now has extra protection.
-            </p>
+        //     <p className="text-gray-300 mb-6">
+        //       Your account now has extra protection.
+        //     </p>
 
-            <button
-              className="btn-primary w-full"
-              onClick={() => (window.location.href = "/dashboard")}
-            >
-              Go to Dashboard
-            </button>
-          </div>
+        //     <button
+        //       className="btn-primary w-full"
+        //       onClick={() => (window.location.href = "/dashboard")}
+        //     >
+        //       Go to Dashboard
+        //     </button>
+        //   </div>
+        <TwoFAEnabled recoveryCodes={recovery || []} />
         )}
       </div>
     </div>

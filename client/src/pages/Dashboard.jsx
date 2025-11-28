@@ -224,18 +224,6 @@ export default function Dashboard() {
 
   const user = auth?.user || {};
 
-  // Disable 2FA handler
-//   const handleDisable = async () => {
-//     try {
-//       const res = await disable2FA({});
-//       if (res?.success) {
-//         toast.success("Two-Factor Authentication disabled");
-//         window.location.reload();
-//       }
-//     } catch (err) {
-//       toast.error("Failed to disable 2FA");
-//     }
-//   };
 
   return (
     <div
