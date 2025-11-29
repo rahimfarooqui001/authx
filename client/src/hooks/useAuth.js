@@ -124,12 +124,11 @@
 //   };
 // }
 
-import axios from "axios";
 import { useState, useContext } from "react";
 import AuthContext from "../context/AuthContext";
-import { axiosClient } from "../api/axios";
+import { axiosClient, publicAxios } from "../api/axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api/auth";
+
 
 export function useAuth() {
   const { auth, login: ctxLogin, logout: ctxLogout, setAuth } = useContext(AuthContext);
@@ -152,7 +151,7 @@ export function useAuth() {
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(`${API_BASE}/login`, payload);
+      const res = await publicAxios.post(`/login`, payload);
       const data = res.data?.data;
 
       // Backend signals that 2FA or recovery code is required
@@ -177,7 +176,7 @@ export function useAuth() {
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(`${API_BASE}/register`, payload);
+      const res = await publicAxios.post(`/register`, payload);
       console.log(res.data?.data)
      const data=res?.data?.data
      storeTokens(data.access, data.refresh, data.user);
@@ -193,7 +192,7 @@ export function useAuth() {
 
   const refresh = async () => {
     try {
-      const res = await axios.post(`${API_BASE}/refresh`);
+      const res = await publicAxios.post(`/refresh`);
       const newAccess = res.data?.data?.access;
 
       if (!newAccess) throw new Error("No access token received");
@@ -210,7 +209,7 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await axios.post(`${API_BASE}/logout`);
+      await publicAxios.post(`/logout`);
     } catch (err) {
       console.warn("Logout error:", err);
     }

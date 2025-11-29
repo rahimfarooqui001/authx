@@ -1,14 +1,13 @@
 // src/hooks/usePassword.js
-import axios from "axios";
 import { useState } from "react";
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api/auth";
+import { publicAxios } from "../api/axios";
 export function usePassword() {
   const [loading, setLoading] = useState(false);
 
   const requestReset = async (payload) => {
     try {
       setLoading(true);
-      const res = await axios.post(`${API_BASE}/request-password-reset`, payload);
+      const res = await publicAxios.post(`/request-password-reset`, payload);
       return res.data;
     } catch (err) {
       throw err.response?.data?.message || "Unable to send reset email";
@@ -21,7 +20,7 @@ export function usePassword() {
     try {
         console.log(payload)
       setLoading(true);
-      const res = await axios.post(`${API_BASE}/reset-password`, payload);
+      const res = await publicAxios.post(`/reset-password`, payload);
       return res.data;
     } catch (err) {
       throw err.response?.data?.message || "Reset failed";

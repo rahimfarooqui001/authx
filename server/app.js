@@ -25,7 +25,7 @@ app.use(rateLimit({
   max: 100,
 }));
 
-
+console.log(process.env.FRONTEND_URL,'fronted url')
 
 // Routes
 app.use("/api/auth",authRoutes );
