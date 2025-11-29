@@ -4,7 +4,6 @@ import { failure } from "../views/responses.js";
 
 
 export const requireAuth = (req, res, next) => {
-  // console.log("Auth header received:", req.headers.authorization);
   const header = req.headers.authorization || "";
   if (!header.startsWith("Bearer "))
     return failure(res, "No token provided", 401);

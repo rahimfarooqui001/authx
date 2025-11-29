@@ -10,16 +10,13 @@ import dotenv from "dotenv";
 dotenv.config();
 const app = express();
 
-// Middlewares
 app.use(helmet());
-// app.use(cors());
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // your deployed frontend URL
+  origin: process.env.FRONTEND_URL, 
 }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Rate limiting
 app.use(rateLimit({
   windowMs: 60000,
   max: 100,
@@ -27,7 +24,6 @@ app.use(rateLimit({
 
 console.log(process.env.FRONTEND_URL,'fronted url')
 
-// Routes
 app.use("/api/auth",authRoutes );
 
 app.get("/health", (_, res) => res.json({ status: "ok" }));

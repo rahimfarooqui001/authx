@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import ProtectedRoute from './components/ProtectedRoute'
 import Disable2FA from './pages/Disable2FA'
+import VerifyEmail from './pages/VerifyEmail'
 
 const App = () => {
   return (
@@ -24,7 +25,7 @@ const App = () => {
       {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      <Route path="/verify-email/:token" element={<VerifyEmailPending />} />
+      <Route path="/verify-email/:token" element={<VerifyEmail />} />
       <Route path="/2fa/disable" element={<Disable2FA />} />
 
       {/* 2FA VERIFY PAGE */}

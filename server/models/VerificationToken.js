@@ -7,5 +7,6 @@ const VerificationTokenSchema = new mongoose.Schema({
 });
 
 VerificationTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+const VerificationToken=mongoose.model("VerificationToken", VerificationTokenSchema);
 
-export default mongoose.model("VerificationToken", VerificationTokenSchema);
+export default VerificationToken

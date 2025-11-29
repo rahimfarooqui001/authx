@@ -20,7 +20,14 @@ import {
 const router = Router();
 
 router.post("/register",register);
-router.get("/verify-email/:token", verifyEmail);
+router.post("/verify-email/:token", (req, res, next) => {
+  if (req.headers["purpose"] === "prefetch") {
+    console.log("⚠️ Prefetch request blocked");
+    return res.status(204).end();
+  }
+  next();
+});
+router.post("/verify-email/:token", verifyEmail);
 router.get('/user',requireAuth,getUser)
 
 router.post("/login", login);
@@ -32,7 +39,6 @@ router.post("/reset-password", resetPassword);
 
 router.get("/me", requireAuth, me);
 
-// 2FA
 router.post("/2fa/setup", requireAuth, setup2FA);
 router.post("/2fa/verify", requireAuth, verifyAndEnable2FA);
 router.post("/2fa/disable", requireAuth, disable2FA);
