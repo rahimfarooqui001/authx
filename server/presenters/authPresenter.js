@@ -761,6 +761,7 @@ export const verifyEmail = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    console.log(req.body,'login body')
     const { email, password, twoFAToken, recoveryCode } = req.body;
 
     const user = await User.findOne({ email });

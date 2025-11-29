@@ -12,7 +12,11 @@ const app = express();
 
 // Middlewares
 app.use(helmet());
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL, // your deployed frontend URL
+  credentials: true // if you use cookies
+}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
