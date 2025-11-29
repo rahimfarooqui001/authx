@@ -15,30 +15,28 @@ const App = () => {
     <div>
       
 
-       <Routes>
-      {/* PUBLIC ROUTES */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Register />} />
-      <Route path="/forgot" element={<ForgotPassword />} />
-      {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
-      <Route path="/reset-password" element={<ResetPassword />} />
+     <Routes>
+  <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route path="/verify-email/:token" element={<VerifyEmailPending />} />
-      <Route path="/2fa/disable" element={<Disable2FA />} />
+  {/* PUBLIC ROUTES */}
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<Register />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
+  <Route path="/verify-email/:token" element={<VerifyEmailPending />} />
+  <Route path="/2fa/disable" element={<Disable2FA />} />
+  <Route path="/2fa" element={<TwoFASetup />} />
 
-      {/* 2FA VERIFY PAGE */}
-      <Route path="/2fa" element={<TwoFASetup />} />
-
-      {/* PROTECTED */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+  {/* PROTECTED */}
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    }
+  />
+</Routes>
 
     </div>
   )
