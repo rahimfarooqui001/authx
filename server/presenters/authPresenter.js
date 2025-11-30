@@ -26,7 +26,7 @@ import { generateRecoveryCodes, verifyRecoveryCode } from "../utils/recovery.js"
 import VerificationToken from "../models/VerificationToken.js";
 
 
-const SALT_ROUNDS = Number(process.env.SALT_ROUNDS || 12);
+const SALT_ROUNDS = Number(process.env.SALT_ROUNDS );
 const APP_BASE = process.env.APP_BASE_URL ;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 

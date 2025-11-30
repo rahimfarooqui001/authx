@@ -12,7 +12,7 @@ export const generateRecoveryCodes = (count = 10) => {
     hashedCodes.push(hash);
   }
 
-  return { plainCodes, hashedCodes }; // ✅ must return object with both arrays
+  return { plainCodes, hashedCodes }; 
 };
 
 
