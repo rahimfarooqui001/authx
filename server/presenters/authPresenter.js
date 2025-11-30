@@ -42,6 +42,47 @@ const formatUser = (user) => ({
 });
 
 
+// export const register = async (req, res) => {
+//   try {
+//     const { name, email, password, role } = req.body;
+
+//     const exists = await User.findOne({ email });
+//     if (exists) return failure(res, "Email already registered", 409);
+
+//     const hash = await bcrypt.hash(password, SALT_ROUNDS);
+//     const user = await User.create({ name, email, password: hash, role, isVerified: false });
+
+//     const token = makeTokenString();
+//     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
+
+//    const check =  await VerificationToken.create({ user: user._id, token, expiresAt });
+//     const verifyUrl = `${FRONTEND_URL}/verify-email/${token}`;
+
+//     const html = `
+//       <p>Hi ${user.name},</p>
+//       <p>Please verify your email to activate your account:</p>
+//       <a href="${verifyUrl}">${verifyUrl}</a>
+//     `;
+
+//     await sendMail({
+//       to: user.email,
+//       subject: "Verify your AuthX account",
+//       html,
+//     });
+
+//     return success(
+//       res,
+//       {
+//         message: "Account created. Please check your email to verify your account.",
+//         user: formatUser(user),
+//       },
+//       201
+//     );
+//   } catch (err) {
+//     return failure(res, err.message, 500);
+//   }
+// };
+
 export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -53,9 +94,10 @@ export const register = async (req, res) => {
     const user = await User.create({ name, email, password: hash, role, isVerified: false });
 
     const token = makeTokenString();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-   const check =  await VerificationToken.create({ user: user._id, token, expiresAt });
+    await VerificationToken.create({ user: user._id, token, expiresAt });
+
     const verifyUrl = `${FRONTEND_URL}/verify-email/${token}`;
 
     const html = `
@@ -64,12 +106,14 @@ export const register = async (req, res) => {
       <a href="${verifyUrl}">${verifyUrl}</a>
     `;
 
-    await sendMail({
+    // 🔥 Send email WITHOUT blocking response
+    sendMail({
       to: user.email,
       subject: "Verify your AuthX account",
       html,
-    });
+    }).catch(err => console.error("Email send error:", err));
 
+    // 🔥 Respond immediately
     return success(
       res,
       {
@@ -78,6 +122,7 @@ export const register = async (req, res) => {
       },
       201
     );
+
   } catch (err) {
     return failure(res, err.message, 500);
   }
