@@ -1,8 +1,5 @@
 
 
-
-// src/context/AuthContext.js
-// src/context/AuthContext.js
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useEffect, useState } from "react";
 
@@ -12,48 +9,55 @@ export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
     user: null,
     access: null,
-    refresh: null,
     loading: true,
   });
 
+  
   useEffect(() => {
-    const access = localStorage.getItem("access");
-    const refresh = localStorage.getItem("refresh");
-    const user = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("user");
 
-    if (access && refresh && user) {
-      setAuth({
-        user: JSON.parse(user),
-        access,
-        refresh,
-        loading: false,
-      });
-    } else {
+    if (!storedUser) {
       setAuth((prev) => ({ ...prev, loading: false }));
+      return;
     }
+
+    const parsedUser = JSON.parse(storedUser);
+
+    setAuth((prev) => ({
+      ...prev,
+      user: parsedUser,
+    }));
+
+    silentRefresh();
   }, []);
 
+ 
   useEffect(() => {
-    if (auth.access && auth.refresh && auth.user) {
-      localStorage.setItem("access", auth.access);
-      localStorage.setItem("refresh", auth.refresh);
+    if (auth.user) {
       localStorage.setItem("user", JSON.stringify(auth.user));
     } else {
-      localStorage.removeItem("access");
-      localStorage.removeItem("refresh");
       localStorage.removeItem("user");
     }
-  }, [auth]);
+  }, [auth.user]);
 
-  const login = ({ user, access, refresh }) => {
-    setAuth({ user, access, refresh, loading: false });
+
+  const login = ({ user, access }) => {
+    setAuth({
+      user,
+      access,
+      loading: false,
+    });
   };
+
 
   const logout = () => {
-    setAuth({ user: null, access: null, refresh: null, loading: false });
-    localStorage.clear();
-    window.location.href = "/login";
+    setAuth({
+      user: null,
+      access: null,
+      loading: false,
+    });
   };
+
 
   const isAccessTokenExpired = () => {
     if (!auth.access) return true;
@@ -61,13 +65,51 @@ export const AuthProvider = ({ children }) => {
     return Date.now() >= exp * 1000;
   };
 
-  const setUser = (newUser) => {
-    setAuth((prev) => ({ ...prev, user: newUser }));
+
+  const silentRefresh = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/refresh`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) {
+        logout();
+        return;
+      }
+
+      const data = await res.json();
+      const newAccess = data?.data?.access;
+
+      if (!newAccess) {
+        logout();
+        return;
+      }
+
+      setAuth((prev) => ({
+        ...prev,
+        access: newAccess,
+        loading: false,
+      }));
+    } catch {
+      logout();
+    }
   };
 
+  console.log(auth.access,'access token ')
   return (
     <AuthContext.Provider
-      value={{ auth, setAuth, setUser, login, logout, isAccessTokenExpired }}
+      value={{
+        auth,
+        setAuth,
+        login,
+        logout,
+        isAccessTokenExpired,
+        silentRefresh,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -75,4 +117,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
-

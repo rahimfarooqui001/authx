@@ -1,6 +1,6 @@
 // src/hooks/usePassword.js
 import { useState } from "react";
-import { publicAxios } from "../api/axios";
+import { publicAxios } from "../api/publicAxios";
 export function usePassword() {
   const [loading, setLoading] = useState(false);
 

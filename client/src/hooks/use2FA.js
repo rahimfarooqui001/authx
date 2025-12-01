@@ -1,21 +1,20 @@
 
 // src/hooks/use2FA.js
 import { useState, useContext } from "react";
-import AuthContext from "../context/AuthContext";
-import { axiosClient } from "../api/axios";
 import { useAuth } from "./useAuth";
+import { useAxiosAuth } from "../api/useAxiosAuth";
 
 export function use2FA() {
+    const axiosAuth = useAxiosAuth();
   const [faLoading, setFaLoading] = useState(false);
   const [faError, setFaError] = useState(null);
-  const { auth, setUser } = useContext(AuthContext);
   const {getUser}=useAuth()
 
   const setup2FA = async () => {
     try {
       setFaLoading(true);
       setFaError(null);
-      const res = await axiosClient.post(`/2fa/setup`, {});
+      const res = await axiosAuth.post(`/2fa/setup`, {});
    
       return res.data?.data;
     } catch (err) {
@@ -31,7 +30,7 @@ export function use2FA() {
     try {
       setFaLoading(true);
       setFaError(null);
-      const res = await axiosClient.post(`/2fa/verify`, payload);
+      const res = await axiosAuth.post(`/2fa/verify`, payload);
       await getUser()
     console.log(res.data)
       return res.data;
@@ -48,7 +47,7 @@ export function use2FA() {
     try {
       setFaLoading(true);
       setFaError(null);
-      const res = await axiosClient.post(`/2fa/disable`, payload);
+      const res = await axiosAuth.post(`/2fa/disable`, payload);
    
     await getUser()
       return res.data;

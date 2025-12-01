@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { publicAxios } from "../api/axios";
+import { publicAxios } from "../api/publicAxios";
 
 export const useVerifyEmail = (token) => {
   const [loading, setLoading] = useState(true);

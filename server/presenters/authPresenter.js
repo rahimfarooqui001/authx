@@ -14,6 +14,7 @@ import {
   createRefreshToken,
   verifyRefreshToken,
   revokeRefreshToken,
+  hashToken,
 } from "../utils/token.js";
 
 import { sendMail } from "../utils/mail.js";
@@ -42,46 +43,6 @@ const formatUser = (user) => ({
 });
 
 
-// export const register = async (req, res) => {
-//   try {
-//     const { name, email, password, role } = req.body;
-
-//     const exists = await User.findOne({ email });
-//     if (exists) return failure(res, "Email already registered", 409);
-
-//     const hash = await bcrypt.hash(password, SALT_ROUNDS);
-//     const user = await User.create({ name, email, password: hash, role, isVerified: false });
-
-//     const token = makeTokenString();
-//     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
-
-//    const check =  await VerificationToken.create({ user: user._id, token, expiresAt });
-//     const verifyUrl = `${FRONTEND_URL}/verify-email/${token}`;
-
-//     const html = `
-//       <p>Hi ${user.name},</p>
-//       <p>Please verify your email to activate your account:</p>
-//       <a href="${verifyUrl}">${verifyUrl}</a>
-//     `;
-
-//     await sendMail({
-//       to: user.email,
-//       subject: "Verify your AuthX account",
-//       html,
-//     });
-
-//     return success(
-//       res,
-//       {
-//         message: "Account created. Please check your email to verify your account.",
-//         user: formatUser(user),
-//       },
-//       201
-//     );
-//   } catch (err) {
-//     return failure(res, err.message, 500);
-//   }
-// };
 
 export const register = async (req, res) => {
   try {
@@ -106,14 +67,12 @@ export const register = async (req, res) => {
       <a href="${verifyUrl}">${verifyUrl}</a>
     `;
 
-    // 🔥 Send email WITHOUT blocking response
     sendMail({
       to: user.email,
       subject: "Verify your AuthX account",
       html,
     }).catch(err => console.error("Email send error:", err));
 
-    // 🔥 Respond immediately
     return success(
       res,
       {
@@ -171,7 +130,6 @@ export const verifyEmail = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    console.log(req.body,'login body')
     const { email, password, twoFAToken, recoveryCode } = req.body;
 
     const user = await User.findOne({ email });
@@ -183,8 +141,8 @@ export const login = async (req, res) => {
     if (!user.isVerified)
       return failure(res, "Please verify your email before login", 403);
 
+    
     if (user.twoFA?.enabled) {
-     
       if (!twoFAToken && !recoveryCode) {
         return success(res, {
           twoFARequired: true,
@@ -198,8 +156,7 @@ export const login = async (req, res) => {
       if (twoFAToken) {
         valid2FA = verifyTOTP(user.twoFA.secret, twoFAToken);
         if (!valid2FA) errorMessage = "Invalid 2FA code";
-      }
-      else if (recoveryCode) {
+      } else if (recoveryCode) {
         const result = verifyRecoveryCode(user.twoFA.recoveryCodes, recoveryCode);
         valid2FA = result.valid;
         errorMessage = result.message;
@@ -216,11 +173,14 @@ export const login = async (req, res) => {
       }
     }
 
+   
     const access = createAccessToken(user);
     const refresh = await createRefreshToken(req, user);
 
+
     return success(res, {
       message: "Login successful",
+      access,
       user: {
         id: user._id,
         name: user.name,
@@ -229,9 +189,8 @@ export const login = async (req, res) => {
         emailVerified: user.isVerified,
         twoFAEnabled: user.twoFA?.enabled || false,
       },
-      access,
-      refresh,
     });
+
   } catch (err) {
     return failure(res, err.message, 500);
   }
@@ -240,23 +199,32 @@ export const login = async (req, res) => {
 
 export const refresh = async (req, res) => {
   try {
-    const { token } = req.body;
-    if (!token) return failure(res, "Refresh token required", 400);
+    const token = req.cookies?.refreshToken;
+    if (!token) return failure(res, "Refresh token missing", 401);
 
-    const payload = verifyRefreshToken(token);
-    const stored = await RefreshToken.findOne({ token });
+    let payload;
+    try {
+      payload = verifyRefreshToken(token);
+    } catch (err) {
+      return failure(res, "Invalid or expired refresh token", 401);
+    }
 
-    if (!stored) return failure(res, "Refresh expired or revoked", 401);
-
-    await revokeRefreshToken(token);
+    const hashedToken = hashToken(token);
+    const stored = await RefreshToken.findOne({ token: hashedToken });
+    if (!stored) return failure(res, "Refresh token revoked", 401);
 
     const user = await User.findById(payload.sub);
-    const access = createAccessToken(user);
-    const newRefresh = await createRefreshToken(req, user);
+    if (!user) {
+      await revokeRefreshToken(token);
+      return failure(res, "User not found", 404);
+    }
 
-    return success(res, { access, refresh: newRefresh });
+    const access = createAccessToken(user);
+
+    return success(res, { access });
+
   } catch (err) {
-    return failure(res, err.message, 401);
+    return failure(res, err.message, 500);
   }
 };
 
@@ -426,3 +394,27 @@ export const disable2FA = async (req, res) => {
 };
 
 
+
+
+export const logout = async (req, res) => {
+  try {
+    const token = req.cookies?.refreshToken;
+
+    if (token) {
+      const hashedToken = hashToken(token);
+      await RefreshToken.deleteOne({ token: hashedToken });
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+      maxAge: 0,
+    });
+
+    return success(res, { message: "Logged out successfully" });
+  } catch (err) {
+    return failure(res, err.message, 500);
+  }
+};

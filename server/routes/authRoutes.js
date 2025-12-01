@@ -14,7 +14,8 @@ import {
   verifyEmail,
   refresh,
   me,
-  getUser
+  getUser,
+  logout
 } from "../presenters/authPresenter.js";
 
 const router = Router();
@@ -32,7 +33,7 @@ router.get('/user',requireAuth,getUser)
 
 router.post("/login", login);
 router.post("/refresh", refresh);
-router.post("/logout", (_, res) => res.json({ ok: true }));
+router.post("/logout", logout);
 
 router.post("/request-password-reset", requestPasswordReset);
 router.post("/reset-password", resetPassword);
